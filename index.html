@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>모금해 - 당신의 이야기가 세상을 바꿉니다</title>
+<meta name="description" content="한국형 크라우드펀딩 플랫폼. 5분 만에 캠페인을 시작하고, 따뜻한 마음을 모아보세요." />
+<meta property="og:title" content="모금해 - 당신의 이야기가 세상을 바꿉니다" />
+<meta property="og:description" content="어려운 순간에 함께하는 사람들. 한국형 크라우드펀딩 플랫폼." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet" />
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#0a0a1a;color:#f0f0f5;font-family:'Pretendard','Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,sans-serif;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:#0a0a1a}::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes gradientShift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes countUp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@keyframes checkmark{0%{transform:scale(0)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+input,textarea,select,button{font-family:inherit}a{color:inherit;text-decoration:none}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const{useState,useEffect,useRef,createContext,useContext}=React;
+
+/* ── Auth Context ── */
+const AuthCtx=createContext();
+function useAuth(){return useContext(AuthCtx)}
+function AuthProvider({children}){
+  const[user,setUser]=useState(()=>{try{return JSON.parse(localStorage.getItem('mogum_user'))}catch{return null}});
+  const login=(u)=>{localStorage.setItem('mogum_user',JSON.stringify(u));setUser(u)};
+  const logout=()=>{localStorage.removeItem('mogum_user');setUser(null)};
+  return <AuthCtx.Provider value={{user,login,logout}}>{children}</AuthCtx.Provider>;
+}
+
+/* ── Data ── */
+const initCampaigns=[
+  {id:1,title:"교통사고 후 재활 치료비가 필요합니다",author:"김민수",category:"의료/건강",goal:5000000,raised:3750000,donors:127,daysLeft:12,image:"https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=400&h=250&fit=crop",description:"갑작스러운 교통사고로 척추 수술을 받게 되었습니다. 3개월간의 재활 치료비가 필요합니다.",updates:[]},
+  {id:2,title:"화재 피해 가정 긴급 지원",author:"이영희",category:"긴급구호",goal:9990000,raised:8200000,donors:342,daysLeft:5,image:"https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=250&fit=crop",description:"지난주 발생한 화재로 전소된 집을 재건하기 위한 긴급 모금입니다.",updates:[]},
+  {id:3,title:"유기견 보호소 겨울나기 프로젝트",author:"동물사랑회",category:"동물보호",goal:3000000,raised:1800000,donors:89,daysLeft:20,image:"https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&h=250&fit=crop",description:"추운 겨울, 보호소의 유기견들에게 따뜻한 환경을 만들어주세요.",updates:[]},
+  {id:4,title:"시골 학교 도서관 리모델링",author:"박선생",category:"교육",goal:8000000,raised:2400000,donors:56,daysLeft:30,image:"https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=250&fit=crop",description:"낡은 시골 학교 도서관을 아이들의 꿈이 자라는 공간으로 바꾸고 싶습니다.",updates:[]},
+  {id:5,title:"독거노인 반찬 배달 봉사 지원",author:"따뜻한이웃",category:"복지",goal:2000000,raised:1950000,donors:201,daysLeft:3,image:"https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=400&h=250&fit=crop",description:"매주 50가구 독거노인 가정에 따뜻한 반찬을 전달하고 있습니다.",updates:[]},
+  {id:6,title:"장애 아동 음악 교육 프로그램",author:"하모니재단",category:"교육",goal:6000000,raised:4100000,donors:178,daysLeft:15,image:"https://images.unsplash.com/photo-1514119412350-e174d90d585e?w=400&h=250&fit=crop",description:"음악으로 세상과 소통하는 아이들을 위한 1년 교육 프로그램입니다.",updates:[]},
+];
+const categories=["전체","긴급구호","의료/건강","교육","동물보호","복지","환경","문화/예술"];
+function formatKRW(n){if(n>=10000)return(n/10000).toFixed(0)+"만원";return n.toLocaleString()+"원"}
+const donationAmounts=[5000,10000,30000,50000,100000];
+
+/* ── Shared UI ── */
+const Overlay=({children,onClose})=>(
+  <div style={{position:"fixed",inset:0,zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={e=>{if(e.target===e.currentTarget)onClose()}}>
+    <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,.72)",backdropFilter:"blur(10px)"}}/>
+    <div style={{position:"relative",background:"#14142c",borderRadius:20,padding:"36px 32px",maxWidth:480,width:"100%",border:"1px solid rgba(255,255,255,.08)",maxHeight:"92vh",overflowY:"auto",animation:"fadeInUp .4s ease-out"}}>{children}</div>
+  </div>
+);
+const Btn=({children,primary,full,...p})=>{
+  const[h,setH]=useState(false);
+  return <button onMouseEnter={()=>setH(true)} onMouseLeave={()=>setH(false)} {...p} style={{background:primary?"linear-gradient(135deg,#FF6B35,#FF8C61)":"rgba(255,255,255,.06)",color:primary?"#fff":"#f0f0f5",border:primary?"none":"1px solid rgba(255,255,255,.1)",borderRadius:12,padding:"13px 28px",fontSize:15,fontWeight:700,cursor:"pointer",transition:"all .3s",width:full?"100%":"auto",transform:h?"translateY(-1px)":"none",boxShadow:h&&primary?"0 6px 24px rgba(255,107,53,.4)":"none",...(p.style||{})}}>{children}</button>;
+};
+const Input=({label,...p})=>(
+  <div style={{marginBottom:18}}>
+    {label&&<label style={{fontSize:13,fontWeight:600,color:"#aac",display:"block",marginBottom:7}}>{label}</label>}
+    <input {...p} style={{width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"11px 16px",color:"#f0f0f5",fontSize:14,outline:"none",...(p.style||{})}}
+      onFocus={e=>e.target.style.borderColor="rgba(255,107,53,.3)"}
+      onBlur={e=>e.target.style.borderColor="rgba(255,255,255,.08)"}/>
+  </div>
+);
+
+/* ── Progress Bar ── */
+function ProgressBar({percentage}){
+  const[w,setW]=useState(0);
+  useEffect(()=>{const t=setTimeout(()=>setW(Math.min(percentage,100)),100);return()=>clearTimeout(t)},[percentage]);
+  return <div style={{width:"100%",height:6,background:"#1a1a2e",borderRadius:3,overflow:"hidden"}}><div style={{width:w+"%",height:"100%",background:"linear-gradient(90deg,#FF6B35,#FF8C61)",borderRadius:3,transition:"width 1.2s cubic-bezier(.22,1,.36,1)"}}/></div>;
+}
+
+/* ── Auth Modal ── */
+function AuthModal({onClose,initialTab}){
+  const{login}=useAuth();
+  const[tab,setTab]=useState(initialTab||"login");
+  const[name,setName]=useState("");const[email,setEmail]=useState("");const[pw,setPw]=useState("");
+  const[error,setError]=useState("");const[success,setSuccess]=useState(false);
+
+  const handleSignup=()=>{
+    if(!name||!email||!pw){setError("모든 항목을 입력해주세요");return}
+    if(pw.length<6){setError("비밀번호는 6자 이상이어야 합니다");return}
+    const users=JSON.parse(localStorage.getItem('mogum_users')||'[]');
+    if(users.find(u=>u.email===email)){setError("이미 가입된 이메일입니다");return}
+    const u={name,email,pw,createdAt:new Date().toISOString()};
+    users.push(u);localStorage.setItem('mogum_users',JSON.stringify(users));
+    login({name,email});setSuccess(true);
+    setTimeout(()=>onClose(),1200);
+  };
+  const handleLogin=()=>{
+    const users=JSON.parse(localStorage.getItem('mogum_users')||'[]');
+    const found=users.find(u=>u.email===email&&u.pw===pw);
+    if(!found){setError("이메일 또는 비밀번호가 올바르지 않습니다");return}
+    login({name:found.name,email:found.email});setSuccess(true);
+    setTimeout(()=>onClose(),800);
+  };
+
+  if(success) return(
+    <Overlay onClose={onClose}>
+      <div style={{textAlign:"center",padding:"20px 0"}}>
+        <div style={{fontSize:56,animation:"checkmark .5s ease-out"}}>✅</div>
+        <h3 style={{fontSize:20,fontWeight:700,marginTop:16}}>{tab==="signup"?"가입 완료!":"로그인 성공!"}</h3>
+        <p style={{color:"#888",fontSize:14,marginTop:8}}>환영합니다</p>
+      </div>
+    </Overlay>
+  );
+
+  return(
+    <Overlay onClose={onClose}>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,.05)",border:"none",color:"#888",fontSize:16,width:32,height:32,borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      <div style={{display:"flex",gap:0,marginBottom:24,background:"rgba(255,255,255,.03)",borderRadius:10,padding:3}}>
+        {["login","signup"].map(t=>(
+          <button key={t} onClick={()=>{setTab(t);setError("")}} style={{flex:1,padding:"10px 0",borderRadius:8,border:"none",fontSize:14,fontWeight:600,cursor:"pointer",transition:"all .2s",background:tab===t?"rgba(255,107,53,.15)":"transparent",color:tab===t?"#FF6B35":"#666"}}>{t==="login"?"로그인":"회원가입"}</button>
+        ))}
+      </div>
+      {tab==="signup"&&<Input label="이름" placeholder="이름을 입력하세요" value={name} onChange={e=>setName(e.target.value)}/>}
+      <Input label="이메일" placeholder="email@example.com" type="email" value={email} onChange={e=>setEmail(e.target.value)}/>
+      <Input label="비밀번호" placeholder="6자 이상" type="password" value={pw} onChange={e=>setPw(e.target.value)}/>
+      {error&&<p style={{color:"#ff5555",fontSize:13,marginBottom:12,animation:"shake .3s"}}>{error}</p>}
+      <Btn primary full onClick={tab==="signup"?handleSignup:handleLogin} style={{marginTop:4}}>{tab==="signup"?"회원가입":"로그인"}</Btn>
+      {tab==="login"&&<p style={{textAlign:"center",fontSize:12,color:"#555",marginTop:16}}>아직 회원이 아니신가요? <span onClick={()=>setTab("signup")} style={{color:"#FF6B35",cursor:"pointer",fontWeight:600}}>회원가입</span></p>}
+    </Overlay>
+  );
+}
+
+/* ── Donation Modal ── */
+function DonateModal({campaign,onClose,onDonate}){
+  const{user}=useAuth();
+  const[showAuth,setShowAuth]=useState(false);
+  const[amount,setAmount]=useState(10000);
+  const[custom,setCustom]=useState("");
+  const[msg,setMsg]=useState("");
+  const[step,setStep]=useState(1);// 1=amount, 2=confirm, 3=done
+  const[anon,setAnon]=useState(false);
+
+  if(showAuth) return <AuthModal onClose={()=>setShowAuth(false)} initialTab="signup"/>;
+
+  const finalAmt=custom?parseInt(custom):amount;
+  const pct=Math.round((campaign.raised/campaign.goal)*100);
+
+  if(step===3) return(
+    <Overlay onClose={onClose}>
+      <div style={{textAlign:"center",padding:"24px 0"}}>
+        <div style={{fontSize:64,animation:"checkmark .5s ease-out"}}>💝</div>
+        <h3 style={{fontSize:22,fontWeight:800,marginTop:16,fontFamily:"'Outfit',sans-serif"}}>후원 완료!</h3>
+        <p style={{color:"#888",fontSize:14,marginTop:8,lineHeight:1.7}}>
+          {formatKRW(finalAmt)}을 후원해주셨습니다.<br/>
+          {campaign.author}님께 큰 힘이 됩니다.
+        </p>
+        <Btn primary onClick={onClose} style={{marginTop:24}}>닫기</Btn>
+      </div>
+    </Overlay>
+  );
+
+  if(step===2) return(
+    <Overlay onClose={onClose}>
+      <h2 style={{fontSize:20,fontWeight:800,marginBottom:20}}>후원 확인</h2>
+      <div style={{background:"rgba(255,255,255,.03)",borderRadius:12,padding:20,marginBottom:20}}>
+        <p style={{fontSize:13,color:"#888",marginBottom:6}}>캠페인</p>
+        <p style={{fontSize:15,fontWeight:600,marginBottom:16}}>{campaign.title}</p>
+        <div style={{display:"flex",justifyContent:"space-between",borderTop:"1px solid rgba(255,255,255,.05)",paddingTop:12}}>
+          <span style={{color:"#888",fontSize:14}}>후원 금액</span>
+          <span style={{fontSize:18,fontWeight:800,color:"#FF6B35",fontFamily:"'Outfit',sans-serif"}}>{formatKRW(finalAmt)}</span>
+        </div>
+        {msg&&<div style={{marginTop:12,borderTop:"1px solid rgba(255,255,255,.05)",paddingTop:12}}><p style={{color:"#888",fontSize:12}}>응원 메시지</p><p style={{fontSize:14,marginTop:4}}>{msg}</p></div>}
+      </div>
+      <p style={{fontSize:11,color:"#555",marginBottom:16,lineHeight:1.7}}>* 데모 버전입니다. 실제 결제가 이루어지지 않습니다.<br/>* 실제 서비스에서는 토스페이먼츠 결제창이 연동됩니다.</p>
+      <div style={{display:"flex",gap:10}}>
+        <Btn onClick={()=>setStep(1)} style={{flex:1}}>이전</Btn>
+        <Btn primary onClick={()=>{onDonate(finalAmt,msg,anon);setStep(3)}} style={{flex:2}}>후원하기</Btn>
+      </div>
+    </Overlay>
+  );
+
+  return(
+    <Overlay onClose={onClose}>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,.05)",border:"none",color:"#888",fontSize:16,width:32,height:32,borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      <h2 style={{fontSize:22,fontWeight:800,margin:"0 0 4px",fontFamily:"'Outfit',sans-serif"}}>후원하기</h2>
+      <p style={{fontSize:13,color:"#666",marginBottom:20}}>{campaign.title}</p>
+      <div style={{background:"rgba(255,255,255,.03)",borderRadius:10,padding:"12px 16px",marginBottom:20}}>
+        <ProgressBar percentage={pct}/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:8,fontSize:13}}>
+          <span style={{color:"#FF6B35",fontWeight:700}}>{pct}% 달성</span>
+          <span style={{color:"#888"}}>{formatKRW(campaign.raised)} / {formatKRW(campaign.goal)}</span>
+        </div>
+      </div>
+      <label style={{fontSize:13,fontWeight:600,color:"#aac",display:"block",marginBottom:10}}>후원 금액</label>
+      <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:12}}>
+        {donationAmounts.map(a=>(
+          <button key={a} onClick={()=>{setAmount(a);setCustom("")}} style={{
+            padding:"9px 16px",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",transition:"all .2s",
+            background:amount===a&&!custom?"rgba(255,107,53,.15)":"rgba(255,255,255,.04)",
+            color:amount===a&&!custom?"#FF6B35":"#aaa",
+            border:amount===a&&!custom?"1px solid rgba(255,107,53,.3)":"1px solid rgba(255,255,255,.06)",
+          }}>{formatKRW(a)}</button>
+        ))}
+      </div>
+      <Input label="직접 입력" placeholder="금액을 입력하세요 (원)" type="number" value={custom} onChange={e=>{setCustom(e.target.value);setAmount(0)}}/>
+      <div style={{marginBottom:18}}>
+        <label style={{fontSize:13,fontWeight:600,color:"#aac",display:"block",marginBottom:7}}>응원 메시지 (선택)</label>
+        <textarea placeholder="따뜻한 한마디를 남겨주세요" value={msg} onChange={e=>setMsg(e.target.value)} rows={2} style={{width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"11px 16px",color:"#f0f0f5",fontSize:14,outline:"none",resize:"none",fontFamily:"inherit"}}/>
+      </div>
+      <label style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:"#888",marginBottom:20,cursor:"pointer"}}>
+        <input type="checkbox" checked={anon} onChange={e=>setAnon(e.target.checked)} style={{accentColor:"#FF6B35"}}/>
+        익명으로 후원하기
+      </label>
+      {!user?
+        <Btn primary full onClick={()=>setShowAuth(true)}>로그인 후 후원하기</Btn>:
+        <Btn primary full onClick={()=>{if(!finalAmt||finalAmt<1000){alert("최소 1,000원 이상 후원 가능합니다");return}setStep(2)}}>
+          {formatKRW(finalAmt||0)} 후원하기
+        </Btn>
+      }
+    </Overlay>
+  );
+}
+
+/* ── Campaign Card ── */
+function CampaignCard({campaign,index,onOpenDetail}){
+  const pct=Math.round((campaign.raised/campaign.goal)*100);
+  const[visible,setVisible]=useState(false);
+  const[hover,setHover]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setVisible(true),80*index);return()=>clearTimeout(t)},[index]);
+  return(
+    <div onClick={()=>onOpenDetail(campaign)}
+      onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+      style={{background:"#12122a",borderRadius:16,overflow:"hidden",border:"1px solid rgba(255,255,255,.06)",opacity:visible?1:0,transform:visible?(hover?"translateY(-4px)":"translateY(0)"):"translateY(24px)",boxShadow:hover?"0 12px 40px rgba(255,107,53,.15)":"none",transition:"all .6s cubic-bezier(.22,1,.36,1)",cursor:"pointer"}}>
+      <div style={{position:"relative",height:180,overflow:"hidden"}}>
+        <img src={campaign.image} alt="" style={{width:"100%",height:"100%",objectFit:"cover",transition:"transform .6s",transform:hover?"scale(1.05)":"scale(1)"}}/>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(to top,rgba(18,18,42,.6) 0%,transparent 50%)"}}/>
+        <div style={{position:"absolute",top:12,left:12,background:"rgba(255,107,53,.9)",color:"#fff",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>{campaign.category}</div>
+        {campaign.daysLeft<=5&&<div style={{position:"absolute",top:12,right:12,background:"rgba(255,59,48,.9)",color:"#fff",padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:700,animation:"pulse 2s infinite"}}>마감 임박</div>}
+      </div>
+      <div style={{padding:"18px 18px 22px"}}>
+        <h3 style={{margin:0,fontSize:15,fontWeight:700,color:"#f0f0f5",lineHeight:1.5,minHeight:46,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{campaign.title}</h3>
+        <p style={{margin:"6px 0 0",fontSize:12,color:"#556"}}>by {campaign.author}</p>
+        <p style={{margin:"6px 0 14px",fontSize:13,color:"#889",lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{campaign.description}</p>
+        <ProgressBar percentage={pct}/>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:10,fontSize:13}}>
+          <span style={{color:"#FF6B35",fontWeight:700,fontSize:15}}>{pct}%</span>
+          <span style={{color:"#aac"}}>{formatKRW(campaign.raised)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:6,fontSize:12,color:"#556"}}>
+          <span>{campaign.donors}명 참여</span><span>{campaign.daysLeft}일 남음</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Campaign Detail ── */
+function CampaignDetail({campaign,onClose,onDonate}){
+  const pct=Math.round((campaign.raised/campaign.goal)*100);
+  const[showDonate,setShowDonate]=useState(false);
+  const donations=JSON.parse(localStorage.getItem('mogum_donations_'+campaign.id)||'[]');
+  if(showDonate) return <DonateModal campaign={campaign} onClose={()=>setShowDonate(false)} onDonate={(amt,msg,anon)=>{onDonate(campaign.id,amt,msg,anon);setShowDonate(false)}}/>;
+  return(
+    <Overlay onClose={onClose}>
+      <img src={campaign.image} alt="" style={{width:"calc(100% + 64px)",height:200,objectFit:"cover",borderRadius:"20px 20px 0 0",margin:"-36px -32px 0",display:"block"}}/>
+      <button onClick={onClose} style={{position:"absolute",top:16,right:16,background:"rgba(0,0,0,.5)",backdropFilter:"blur(8px)",border:"none",color:"#fff",fontSize:18,width:36,height:36,borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+      <div style={{paddingTop:24}}>
+        <div style={{display:"flex",gap:8,marginBottom:10}}>
+          <span style={{background:"rgba(255,107,53,.15)",color:"#FF6B35",padding:"4px 12px",borderRadius:20,fontSize:12,fontWeight:600}}>{campaign.category}</span>
+          <span style={{background:"rgba(255,255,255,.05)",color:"#888",padding:"4px 12px",borderRadius:20,fontSize:12}}>{campaign.daysLeft}일 남음</span>
+        </div>
+        <h2 style={{fontSize:20,fontWeight:800,lineHeight:1.4,margin:"0 0 6px"}}>{campaign.title}</h2>
+        <p style={{fontSize:13,color:"#556",marginBottom:18}}>by {campaign.author}</p>
+        <div style={{background:"rgba(255,255,255,.03)",borderRadius:12,padding:18,marginBottom:20}}>
+          <ProgressBar percentage={pct}/>
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:12}}>
+            <div><div style={{fontSize:22,fontWeight:800,color:"#FF6B35",fontFamily:"'Outfit',sans-serif"}}>{formatKRW(campaign.raised)}</div><div style={{fontSize:12,color:"#556",marginTop:2}}>목표 {formatKRW(campaign.goal)}의 {pct}%</div></div>
+            <div style={{textAlign:"right"}}><div style={{fontSize:22,fontWeight:800,fontFamily:"'Outfit',sans-serif"}}>{campaign.donors}</div><div style={{fontSize:12,color:"#556",marginTop:2}}>명 참여</div></div>
+          </div>
+        </div>
+        <h3 style={{fontSize:14,fontWeight:700,marginBottom:8}}>캠페인 이야기</h3>
+        <p style={{fontSize:14,color:"#aac",lineHeight:1.8,marginBottom:16}}>{campaign.description}<br/><br/>안녕하세요, {campaign.author}입니다. 이 캠페인에 관심을 가져주셔서 감사합니다. 모금된 금액은 투명하게 사용 내역을 공개하겠습니다.</p>
+        {donations.length>0&&<>
+          <h3 style={{fontSize:14,fontWeight:700,marginBottom:8}}>최근 후원 ({donations.length}건)</h3>
+          <div style={{maxHeight:150,overflowY:"auto",marginBottom:16}}>
+            {donations.slice(-5).reverse().map((d,i)=>(
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:"1px solid rgba(255,255,255,.03)",fontSize:13}}>
+                <div><span style={{fontWeight:600}}>{d.anon?"익명":d.name}</span>{d.msg&&<span style={{color:"#666",marginLeft:8}}>"{d.msg}"</span>}</div>
+                <span style={{color:"#FF6B35",fontWeight:600}}>{formatKRW(d.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </>}
+        <div style={{display:"flex",gap:10}}>
+          <Btn primary onClick={()=>setShowDonate(true)} style={{flex:1}}>후원하기</Btn>
+          <button onClick={()=>{if(navigator.share){navigator.share({title:campaign.title,text:campaign.description,url:window.location.href})}else{navigator.clipboard.writeText(window.location.href);alert("링크가 복사되었습니다!")}}} style={{width:48,background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.1)",borderRadius:12,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",color:"#f0f0f5"}}>📤</button>
+        </div>
+      </div>
+    </Overlay>
+  );
+}
+
+/* ── Hero Stats ── */
+function HeroStats(){
+  const[c,setC]=useState(0);const[d,setD]=useState(0);
+  useEffect(()=>{let a=0,b=0;const i=setInterval(()=>{a+=Math.ceil((3247-a)*.06);b+=Math.ceil((12847-b)*.06);if(a>=3247)a=3247;if(b>=12847)b=12847;setC(a);setD(b);if(a>=3247&&b>=12847)clearInterval(i)},30);return()=>clearInterval(i)},[]);
+  return <div style={{display:"flex",gap:48,justifyContent:"center",flexWrap:"wrap"}}>
+    {[{l:"누적 모금액",v:c.toLocaleString()+"만원"},{l:"진행 중인 캠페인",v:"482건"},{l:"참여자",v:d.toLocaleString()+"명"}].map((s,i)=>(
+      <div key={i} style={{textAlign:"center",animation:"countUp .8s ease-out both",animationDelay:i*.15+"s"}}>
+        <div style={{fontSize:34,fontWeight:800,color:"#FF6B35",fontFamily:"'Outfit',sans-serif"}}>{s.v}</div>
+        <div style={{fontSize:13,color:"#556",marginTop:6,letterSpacing:".06em"}}>{s.l}</div>
+      </div>
+    ))}
+  </div>;
+}
+
+/* ── App ── */
+function App(){
+  const{user,logout}=useAuth();
+  const[activeCat,setActiveCat]=useState("전체");
+  const[search,setSearch]=useState("");
+  const[showAuth,setShowAuth]=useState(null);
+  const[showCreate,setShowCreate]=useState(false);
+  const[detailCamp,setDetailCamp]=useState(null);
+  const[campaigns,setCampaigns]=useState(initCampaigns);
+
+  const handleDonate=(campId,amt,msg,anon)=>{
+    const donations=JSON.parse(localStorage.getItem('mogum_donations_'+campId)||'[]');
+    donations.push({name:user?.name||"익명",amount:amt,msg,anon,date:new Date().toISOString()});
+    localStorage.setItem('mogum_donations_'+campId,JSON.stringify(donations));
+    setCampaigns(prev=>prev.map(c=>c.id===campId?{...c,raised:c.raised+amt,donors:c.donors+1}:c));
+  };
+
+  const filtered=campaigns.filter(c=>(activeCat==="전체"||c.category===activeCat)&&(!search||c.title.includes(search)||c.description.includes(search)));
+
+  return(
+    <div style={{minHeight:"100vh"}}>
+      {/* Nav */}
+      <nav style={{position:"sticky",top:0,zIndex:100,background:"rgba(10,10,26,.88)",backdropFilter:"blur(24px)",WebkitBackdropFilter:"blur(24px)",borderBottom:"1px solid rgba(255,255,255,.05)",padding:"0 24px"}}>
+        <div style={{maxWidth:1200,margin:"0 auto",display:"flex",alignItems:"center",justifyContent:"space-between",height:64}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>window.scrollTo({top:0,behavior:"smooth"})}>
+            <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,#FF6B35,#FF8C61)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:16,color:"#fff",fontFamily:"'Outfit',sans-serif"}}>모</div>
+            <span style={{fontSize:20,fontWeight:800,fontFamily:"'Outfit',sans-serif",letterSpacing:"-.02em"}}>모금해</span>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{position:"relative"}}>
+              <input type="text" placeholder="검색..." value={search} onChange={e=>setSearch(e.target.value)} style={{background:"rgba(255,255,255,.06)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"9px 16px 9px 36px",color:"#f0f0f5",fontSize:14,width:160,outline:"none"}}/>
+              <span style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",color:"#446",fontSize:14}}>🔍</span>
+            </div>
+            {user?(
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{background:"rgba(255,107,53,.12)",color:"#FF6B35",padding:"7px 14px",borderRadius:10,fontSize:13,fontWeight:600}}>{user.name}님</div>
+                <button onClick={logout} style={{background:"none",border:"none",color:"#556",fontSize:12,cursor:"pointer"}}>로그아웃</button>
+              </div>
+            ):(
+              <div style={{display:"flex",gap:6}}>
+                <Btn onClick={()=>setShowAuth("login")} style={{padding:"8px 16px",fontSize:13}}>로그인</Btn>
+                <Btn primary onClick={()=>setShowAuth("signup")} style={{padding:"8px 16px",fontSize:13}}>회원가입</Btn>
+              </div>
+            )}
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section style={{position:"relative",padding:"80px 24px 64px",textAlign:"center",overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse at 50% -10%,rgba(255,107,53,.13) 0%,transparent 55%)",pointerEvents:"none"}}/>
+        <div style={{position:"relative",maxWidth:720,margin:"0 auto",animation:"fadeInUp .8s ease-out"}}>
+          <h1 style={{fontSize:"clamp(32px,6vw,52px)",fontWeight:800,lineHeight:1.25,fontFamily:"'Outfit','Pretendard',sans-serif",letterSpacing:"-.03em"}}>
+            당신의 이야기가<br/>
+            <span style={{background:"linear-gradient(135deg,#FF6B35,#FFB088,#FF6B35)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundSize:"200% 200%",animation:"gradientShift 4s ease infinite"}}>세상을 바꿉니다</span>
+          </h1>
+          <p style={{fontSize:17,color:"#889",marginTop:20,lineHeight:1.7}}>어려운 순간에 함께하는 사람들.<br/>5분 만에 캠페인을 시작하고, 따뜻한 마음을 모아보세요.</p>
+          <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:32,flexWrap:"wrap"}}>
+            <Btn primary onClick={()=>showCreate?null:setShowCreate(true)}>지금 시작하기</Btn>
+            <Btn onClick={()=>document.getElementById("campaigns").scrollIntoView({behavior:"smooth"})}>캠페인 둘러보기</Btn>
+          </div>
+          <div style={{marginTop:60}}><HeroStats/></div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section style={{padding:"48px 24px 56px",maxWidth:1000,margin:"0 auto"}}>
+        <h2 style={{textAlign:"center",fontSize:12,fontWeight:700,color:"#FF6B35",textTransform:"uppercase",letterSpacing:".18em",marginBottom:36}}>How it works</h2>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:20}}>
+          {[{icon:"✍️",title:"캠페인 작성",desc:"제목, 사연, 목표금액을 입력하면 5분 안에 모금 페이지가 만들어집니다."},{icon:"📣",title:"공유하기",desc:"카카오톡, 인스타그램 등 SNS로 공유하여 주변에 알리세요."},{icon:"💝",title:"모금 받기",desc:"기부금은 대리 결제로 직접 사용처에 전달되어 투명하게 운영됩니다."}].map((s,i)=>(
+            <div key={i} style={{background:"rgba(255,255,255,.03)",borderRadius:16,padding:"36px 24px",textAlign:"center",border:"1px solid rgba(255,255,255,.05)",animation:"fadeInUp .6s ease-out both",animationDelay:i*.1+"s"}}>
+              <div style={{fontSize:40,marginBottom:16,animation:"float 3s ease-in-out infinite",animationDelay:i*.4+"s"}}>{s.icon}</div>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:10}}>
+                <span style={{background:"rgba(255,107,53,.2)",color:"#FF6B35",width:24,height:24,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>{i+1}</span>
+                <h3 style={{fontSize:16,fontWeight:700,margin:0}}>{s.title}</h3>
+              </div>
+              <p style={{fontSize:13,color:"#889",lineHeight:1.7,margin:0}}>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Campaigns */}
+      <section id="campaigns" style={{padding:"16px 24px",maxWidth:1200,margin:"0 auto"}}>
+        <h2 style={{fontSize:22,fontWeight:800,fontFamily:"'Outfit',sans-serif",marginBottom:16}}>진행 중인 캠페인</h2>
+        <div style={{display:"flex",gap:8,overflowX:"auto",paddingBottom:12}}>
+          {categories.map(c=><button key={c} onClick={()=>setActiveCat(c)} style={{background:activeCat===c?"linear-gradient(135deg,#FF6B35,#FF8C61)":"rgba(255,255,255,.04)",color:activeCat===c?"#fff":"#889",border:activeCat===c?"none":"1px solid rgba(255,255,255,.06)",borderRadius:20,padding:"8px 18px",fontSize:13,fontWeight:600,cursor:"pointer",whiteSpace:"nowrap",transition:"all .3s"}}>{c}</button>)}
+        </div>
+      </section>
+      <section style={{padding:"0 24px 64px",maxWidth:1200,margin:"0 auto"}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:24}}>
+          {filtered.map((c,i)=><CampaignCard key={c.id} campaign={c} index={i} onOpenDetail={setDetailCamp}/>)}
+        </div>
+        {!filtered.length&&<div style={{textAlign:"center",padding:60,color:"#446"}}><div style={{fontSize:48,marginBottom:16}}>🔍</div><p>해당 조건에 맞는 캠페인이 없습니다.</p></div>}
+      </section>
+
+      {/* Trust */}
+      <section style={{padding:"60px 24px",background:"rgba(255,255,255,.015)",borderTop:"1px solid rgba(255,255,255,.04)",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
+        <div style={{maxWidth:960,margin:"0 auto",textAlign:"center"}}>
+          <h2 style={{fontSize:28,fontWeight:800,margin:"0 0 8px",fontFamily:"'Outfit',sans-serif"}}>신뢰할 수 있는 모금 플랫폼</h2>
+          <p style={{fontSize:14,color:"#556",marginBottom:40}}>모금해는 투명하고 안전한 모금 환경을 약속합니다</p>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:16}}>
+            {[{i:"🔒",t:"안전한 결제",d:"PCI-DSS 인증 결제 시스템"},{i:"💸",t:"대리 결제",d:"모금액을 직접 사용처에 결제"},{i:"📋",t:"의무 포스팅",d:"수혜자 근황 업데이트 의무화"},{i:"📝",t:"법률 준수",d:"기부금품법 모집등록 지원"}].map((x,i)=>(
+              <div key={i} style={{padding:"28px 20px",borderRadius:14,background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.04)"}}>
+                <div style={{fontSize:30,marginBottom:14}}>{x.i}</div>
+                <h4 style={{fontSize:15,fontWeight:700,margin:"0 0 8px"}}>{x.t}</h4>
+                <p style={{fontSize:13,color:"#889",margin:0,lineHeight:1.6}}>{x.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{padding:"64px 24px",textAlign:"center"}}>
+        <h2 style={{fontSize:30,fontWeight:800,marginBottom:12,fontFamily:"'Outfit',sans-serif"}}>도움이 필요하신가요?</h2>
+        <p style={{fontSize:15,color:"#889",lineHeight:1.7,marginBottom:28}}>지금 바로 캠페인을 시작하세요.<br/>당신의 이야기에 함께할 사람들이 기다리고 있습니다.</p>
+        <Btn primary onClick={()=>setShowCreate(true)}>무료로 캠페인 시작하기</Btn>
+      </section>
+
+      {/* Footer */}
+      <footer style={{padding:"40px 24px 48px",borderTop:"1px solid rgba(255,255,255,.04)"}}>
+        <div style={{maxWidth:1200,margin:"0 auto",display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:32}}>
+          <div>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+              <div style={{width:28,height:28,borderRadius:8,background:"linear-gradient(135deg,#FF6B35,#FF8C61)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:800,fontSize:13,color:"#fff"}}>모</div>
+              <span style={{fontSize:17,fontWeight:700}}>모금해</span>
+            </div>
+            <p style={{fontSize:12,color:"#335",lineHeight:1.8,maxWidth:320}}>서울특별시 강남구 역삼동<br/>contact@mogumhae.kr</p>
+          </div>
+          <div style={{display:"flex",gap:40}}>
+            {[{h:"서비스",l:["캠페인 시작하기","캠페인 둘러보기","수수료 안내"]},{h:"회사",l:["이용약관","개인정보처리방침","고객센터"]}].map((g,i)=>(
+              <div key={i}><h4 style={{fontSize:12,fontWeight:700,color:"#889",marginBottom:12,letterSpacing:".08em"}}>{g.h}</h4>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>{g.l.map(t=><a key={t} href="#" style={{fontSize:13,color:"#446"}}>{t}</a>)}</div></div>
+            ))}
+          </div>
+        </div>
+        <div style={{maxWidth:1200,margin:"24px auto 0",paddingTop:20,borderTop:"1px solid rgba(255,255,255,.03)",textAlign:"center"}}>
+          <p style={{fontSize:11,color:"#224"}}>© 2026 모금해. All rights reserved. Made with ❤️ in Seoul</p>
+        </div>
+      </footer>
+
+      {/* Modals */}
+      {showAuth&&<AuthModal onClose={()=>setShowAuth(null)} initialTab={showAuth}/>}
+      {detailCamp&&<CampaignDetail campaign={detailCamp} onClose={()=>setDetailCamp(null)} onDonate={handleDonate}/>}
+      {showCreate&&(
+        <Overlay onClose={()=>setShowCreate(false)}>
+          <button onClick={()=>setShowCreate(false)} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,.05)",border:"none",color:"#888",fontSize:16,width:32,height:32,borderRadius:"50%",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+          <h2 style={{fontSize:24,fontWeight:800,margin:"0 0 6px",fontFamily:"'Outfit',sans-serif"}}>캠페인 시작하기</h2>
+          <p style={{fontSize:13,color:"#556",margin:"0 0 24px"}}>나의 이야기를 공유하고 도움을 요청하세요</p>
+          <Input label="캠페인 제목" placeholder="도움이 필요한 이유를 간단히 적어주세요"/>
+          <div style={{marginBottom:18}}><label style={{fontSize:13,fontWeight:600,color:"#aac",display:"block",marginBottom:7}}>카테고리</label>
+            <select style={{width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"11px 16px",color:"#f0f0f5",fontSize:14,outline:"none"}}><option value="">선택하세요</option>{categories.filter(c=>c!=="전체").map(c=><option key={c}>{c}</option>)}</select></div>
+          <Input label="목표 금액 (원)" placeholder="최대 9,990,000원" type="number"/>
+          <div style={{marginBottom:18}}><label style={{fontSize:13,fontWeight:600,color:"#aac",display:"block",marginBottom:7}}>나의 이야기</label>
+            <textarea placeholder="자세한 사연을 적어주세요" rows={4} style={{width:"100%",background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:10,padding:"11px 16px",color:"#f0f0f5",fontSize:14,outline:"none",resize:"vertical",fontFamily:"inherit"}}/></div>
+          {!user?<Btn primary full onClick={()=>{setShowCreate(false);setShowAuth("signup")}}>로그인 후 등록하기</Btn>:
+            <Btn primary full onClick={()=>{alert("캠페인 등록 신청이 완료되었습니다! (데모)");setShowCreate(false)}}>캠페인 등록 신청</Btn>}
+          <p style={{fontSize:11,color:"#335",marginTop:12,textAlign:"center",lineHeight:1.7}}>* 기부금품법에 따라 목표 금액은 999만원으로 제한됩니다.<br/>* 모금해가 등록 절차를 안내해 드립니다.</p>
+        </Overlay>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<AuthProvider><App/></AuthProvider>);
+</script>
+</body>
+</html>
